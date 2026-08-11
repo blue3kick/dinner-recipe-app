@@ -152,8 +152,11 @@ function renderSyncStatus(el, sync, status) {
       <div class="form-actions"><button id="btn-sync-in" class="btn btn-primary">Googleでログイン</button></div>
     `;
     document.getElementById('btn-sync-in').addEventListener('click', async () => {
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('ログイン画面への移動が始まりませんでした。ネットワーク接続をご確認のうえ、もう一度お試しください。')), 8000)
+      );
       try {
-        await sync.signIn();
+        await Promise.race([sync.signIn(), timeout]);
       } catch (err) {
         await showAlert('ログインに失敗しました: ' + (err.message || err.code));
       }

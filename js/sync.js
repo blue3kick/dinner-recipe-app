@@ -7,7 +7,6 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/fireba
 import {
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut,
@@ -143,15 +142,6 @@ export async function waitForRedirectResult() {
   return { error: redirectError, user: redirectUser };
 }
 
-// Androidのホーム画面インストール(standalone)やモバイルブラウザでは、
-// signInWithPopupがブロックされたり、ポップアップ↔本体間のストレージ共有がプライバシー保護で
-// 遮断されて固まったりすることがあるため、リダイレクト方式を使う。
-function shouldUseRedirect() {
-  const standalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone;
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-  return !!(standalone || isMobile);
-}
-
 onAuthStateChanged(auth, async (user) => {
   if (user) await startSync(user.uid);
   else stopSync();
@@ -178,21 +168,10 @@ export function getStatus() {
 }
 
 export async function signIn() {
+  // ポップアップ方式はブラウザ判定・ストレージ分離・「デスクトップサイトを表示」設定などの影響を受けやすく
+  // 環境によって無反応のまま固まることがあるため、全端末で一貫してリダイレクト方式を使う。
   const provider = new GoogleAuthProvider();
-  if (shouldUseRedirect()) {
-    await signInWithRedirect(auth, provider);
-    return;
-  }
-  try {
-    await signInWithPopup(auth, provider);
-  } catch (err) {
-    const fallbackCodes = ['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'];
-    if (fallbackCodes.includes(err.code)) {
-      await signInWithRedirect(auth, provider);
-      return;
-    }
-    throw err;
-  }
+  await signInWithRedirect(auth, provider);
 }
 
 export async function signOutUser() {
