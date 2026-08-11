@@ -68,6 +68,37 @@ function uuid() {
   });
 }
 
+// クラウド同期(sync.js)がここにフックを登録すると、ローカル書き込みのたびに呼ばれる。
+// db.js自体はFirebaseを知らない(疎結合を保つ)。
+let syncHook = null;
+export function setSyncHook(fn) {
+  syncHook = fn;
+}
+function notifySync(storeName, action, record) {
+  if (syncHook) {
+    try {
+      syncHook(storeName, action, record);
+    } catch (e) {
+      console.error('sync hook error', e);
+    }
+  }
+}
+
+// リモート(Firestore)からの変更をローカルIndexedDBへ反映する専用の経路。
+// Store側のadd/put等を経由しないため、notifySyncは呼ばれず送信ループにならない。
+export const SyncBridge = {
+  async applyPut(storeName, record) {
+    const store = await tx(storeName, 'readwrite');
+    return reqToPromise(store.put(record));
+  },
+  async applyDelete(storeName, id) {
+    const store = await tx(storeName, 'readwrite');
+    return reqToPromise(store.delete(id));
+  },
+};
+
+export { STORE_RECIPES, STORE_TAGS, STORE_LOGS, STORE_SITES };
+
 export const RecipeStore = {
   async getAll() {
     const store = await tx(STORE_RECIPES, 'readonly');
@@ -86,11 +117,13 @@ export const RecipeStore = {
     recipe.updated_at = now;
     const store = await tx(STORE_RECIPES, 'readwrite');
     await reqToPromise(store.put(recipe));
+    notifySync(STORE_RECIPES, 'put', recipe);
     return recipe;
   },
   async remove(id) {
     const store = await tx(STORE_RECIPES, 'readwrite');
-    return reqToPromise(store.delete(id));
+    await reqToPromise(store.delete(id));
+    notifySync(STORE_RECIPES, 'delete', { recipe_id: id });
   },
 };
 
@@ -108,6 +141,7 @@ export const TagStore = {
     const tag = { tag_id: uuid(), name: name.trim() };
     const store = await tx(STORE_TAGS, 'readwrite');
     await reqToPromise(store.put(tag));
+    notifySync(STORE_TAGS, 'put', tag);
     return tag;
   },
   async rename(id, name) {
@@ -116,11 +150,13 @@ export const TagStore = {
     if (!tag) return null;
     tag.name = name.trim();
     await reqToPromise(store.put(tag));
+    notifySync(STORE_TAGS, 'put', tag);
     return tag;
   },
   async remove(id) {
     const store = await tx(STORE_TAGS, 'readwrite');
-    return reqToPromise(store.delete(id));
+    await reqToPromise(store.delete(id));
+    notifySync(STORE_TAGS, 'delete', { tag_id: id });
   },
 };
 
@@ -139,16 +175,21 @@ export const CookingLogStore = {
     const log = { log_id: uuid(), ...entry };
     const store = await tx(STORE_LOGS, 'readwrite');
     await reqToPromise(store.put(log));
+    notifySync(STORE_LOGS, 'put', log);
     return log;
   },
   async remove(id) {
     const store = await tx(STORE_LOGS, 'readwrite');
-    return reqToPromise(store.delete(id));
+    await reqToPromise(store.delete(id));
+    notifySync(STORE_LOGS, 'delete', { log_id: id });
   },
   async removeByRecipe(recipeId) {
     const logs = await this.getByRecipe(recipeId);
     const store = await tx(STORE_LOGS, 'readwrite');
-    for (const l of logs) await reqToPromise(store.delete(l.log_id));
+    for (const l of logs) {
+      await reqToPromise(store.delete(l.log_id));
+      notifySync(STORE_LOGS, 'delete', { log_id: l.log_id });
+    }
   },
 };
 
@@ -162,6 +203,7 @@ export const SiteStore = {
     const site = { site_id: uuid(), name: name.trim(), host_match: hostMatch.trim() };
     const store = await tx(STORE_SITES, 'readwrite');
     await reqToPromise(store.put(site));
+    notifySync(STORE_SITES, 'put', site);
     return site;
   },
   async update(id, name, hostMatch) {
@@ -171,11 +213,13 @@ export const SiteStore = {
     site.name = name.trim();
     site.host_match = hostMatch.trim();
     await reqToPromise(store.put(site));
+    notifySync(STORE_SITES, 'put', site);
     return site;
   },
   async remove(id) {
     const store = await tx(STORE_SITES, 'readwrite');
-    return reqToPromise(store.delete(id));
+    await reqToPromise(store.delete(id));
+    notifySync(STORE_SITES, 'delete', { site_id: id });
   },
 };
 

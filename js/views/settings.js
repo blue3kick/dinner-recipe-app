@@ -11,6 +11,11 @@ export async function renderSettingsView() {
       <h2>設定・バックアップ</h2>
 
       <div class="detail-section">
+        <h3>クラウド同期（Googleアカウント）</h3>
+        <div id="sync-section"><p class="muted">読み込み中…</p></div>
+      </div>
+
+      <div class="detail-section">
         <h3>外部レシピサイト連携</h3>
         <p class="muted">
           出典URLのホスト名が下記に一致する場合、サイト名を自動判定して表示します。
@@ -119,5 +124,56 @@ export async function renderSettingsView() {
     } catch (err) {
       await showAlert('復元に失敗しました: ' + err.message);
     }
+  });
+
+  initSyncSection();
+}
+
+function renderSyncStatus(el, sync, status) {
+  if (!status.ready) {
+    el.innerHTML = '<p class="muted">読み込み中…</p>';
+    return;
+  }
+  if (status.signedIn) {
+    el.innerHTML = `
+      <div class="sync-account">
+        ${status.photoURL ? `<img class="sync-avatar" src="${escapeHtml(status.photoURL)}" alt="" />` : ''}
+        <div>
+          <p style="margin:0;font-weight:600;">${escapeHtml(status.displayName || status.email)}</p>
+          <p class="muted" style="margin:0;">同期オン — この端末を含め、サインインした端末間でレシピ・タグ・調理記録が自動的に反映されます。</p>
+        </div>
+      </div>
+      <div class="form-actions"><button id="btn-sync-out" class="btn btn-secondary">ログアウト</button></div>
+    `;
+    document.getElementById('btn-sync-out').addEventListener('click', () => sync.signOutUser());
+  } else {
+    el.innerHTML = `
+      <p class="muted">Googleアカウントでログインすると、同じアカウントでログインした端末間でレシピ・タグ・調理記録が自動的に同期されます。</p>
+      <div class="form-actions"><button id="btn-sync-in" class="btn btn-primary">Googleでログイン</button></div>
+    `;
+    document.getElementById('btn-sync-in').addEventListener('click', async () => {
+      try {
+        await sync.signIn();
+      } catch (err) {
+        await showAlert('ログインに失敗しました: ' + (err.message || err.code));
+      }
+    });
+  }
+}
+
+async function initSyncSection() {
+  const el = document.getElementById('sync-section');
+  let sync;
+  try {
+    sync = await import('../sync.js');
+  } catch {
+    el.innerHTML = '<p class="muted">クラウド同期は現在利用できません（ネットワーク接続をご確認ください）。オフラインでもレシピの登録・編集は引き続きご利用いただけます。</p>';
+    return;
+  }
+  if (!document.getElementById('sync-section')) return; // 別画面へ遷移済み
+  renderSyncStatus(el, sync, sync.getStatus());
+  sync.onStatusChange((status) => {
+    const liveEl = document.getElementById('sync-section');
+    if (liveEl) renderSyncStatus(liveEl, sync, status);
   });
 }

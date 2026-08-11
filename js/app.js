@@ -29,6 +29,11 @@ if (shareParams.has('url') || shareParams.has('text') || shareParams.has('title'
 
 startRouter();
 
+// クラウド同期は任意機能。CDNへ到達できない(オフライン等)場合もアプリ本体は動作し続ける。
+import('./sync.js').catch(() => {
+  // ネットワーク不通時などはローカル(IndexedDB)のみで動作する
+});
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dinner-recipe-cache-v3';
+const CACHE_NAME = 'dinner-recipe-cache-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   './js/router.js',
   './js/constants.js',
   './js/ui.js',
+  './js/firebase-config.js',
   './js/views/list.js',
   './js/views/form.js',
   './js/views/detail.js',

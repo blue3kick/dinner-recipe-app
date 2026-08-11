@@ -256,3 +256,6 @@ main#app { max-width: 720px; margin: 0 auto; padding: 16px; }
 }
 .import-preview-list .input { flex: 1; }
 .import-preview-url { font-size: 0.72rem; color: var(--muted); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sync-account { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sync-avatar { width: 36px; height: 36px; border-radius: 50%; }

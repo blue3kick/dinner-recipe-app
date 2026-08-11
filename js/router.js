@@ -30,3 +30,8 @@ export function startRouter() {
 export function navigate(path) {
   location.hash = path;
 }
+
+// リモート同期での変更受信時など、URLを変えずに現在の画面を再描画したい場合に使う
+export function rerenderCurrent() {
+  return render();
+}
