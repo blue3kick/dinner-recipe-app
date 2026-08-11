@@ -147,8 +147,12 @@ function renderSyncStatus(el, sync, status) {
     `;
     document.getElementById('btn-sync-out').addEventListener('click', () => sync.signOutUser());
   } else {
+    const timedOutNote = sync.didAuthInitTimeOut()
+      ? '<p class="muted">⚠️ この端末ではクラウド同期の初期化に時間がかかっています（ブラウザのプライバシー設定等が影響している可能性があります）。ログインは試せますが、失敗する場合はブラウザの設定をご確認ください。</p>'
+      : '';
     el.innerHTML = `
       <p class="muted">Googleアカウントでログインすると、同じアカウントでログインした端末間でレシピ・タグ・調理記録が自動的に同期されます。</p>
+      ${timedOutNote}
       <div class="form-actions"><button id="btn-sync-in" class="btn btn-primary">Googleでログイン</button></div>
     `;
     document.getElementById('btn-sync-in').addEventListener('click', async () => {

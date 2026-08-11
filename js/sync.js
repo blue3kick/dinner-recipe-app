@@ -142,12 +142,29 @@ export async function waitForRedirectResult() {
   return { error: redirectError, user: redirectUser };
 }
 
+// 一部のブラウザ(Safari/iPadOSでのストレージ制限等)ではonAuthStateChangedが
+// 初回発火しないまま固まることがあるため、タイムアウトでUIだけは必ず解放する。
+let initTimedOut = false;
+const readyTimeout = setTimeout(() => {
+  if (!ready) {
+    initTimedOut = true;
+    ready = true;
+    notifyStatus();
+  }
+}, 4000);
+
 onAuthStateChanged(auth, async (user) => {
+  clearTimeout(readyTimeout);
+  initTimedOut = false;
   if (user) await startSync(user.uid);
   else stopSync();
   ready = true;
   notifyStatus();
 });
+
+export function didAuthInitTimeOut() {
+  return initTimedOut;
+}
 
 export function onStatusChange(fn) {
   statusListeners.push(fn);

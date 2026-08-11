@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dinner-recipe-cache-v5';
+const CACHE_NAME = 'dinner-recipe-cache-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -33,20 +33,20 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// ネットワーク優先: オンライン時は常に最新を取得し、取れた分だけキャッシュを更新する。
+// オフライン時のみキャッシュにフォールバックする(stale-while-revalidateだと1つ前の
+// バージョンを掴んだまま更新に気づきにくいため、開発中の取り違えを避ける狙いもある)。
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
