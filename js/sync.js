@@ -125,14 +125,22 @@ function notifyStatus() {
   statusListeners.forEach((fn) => fn(status));
 }
 
-// signInWithRedirectで戻ってきた際のエラーを拾う(成功時はonAuthStateChangedが自動的に発火する)
+// signInWithRedirectで戻ってきた際の結果/エラーを拾う(成功時はonAuthStateChangedも別途発火する)。
+// getRedirectResult自体はPromiseなので、呼び出し側は必ずwaitForRedirectResult()でawaitしてから
+// エラー有無を確認すること(そうしないと未解決のうちに読んでしまい常にnullに見える)。
 let redirectError = null;
-getRedirectResult(auth).catch((err) => {
-  redirectError = err;
-});
+let redirectUser = null;
+const redirectResultPromise = getRedirectResult(auth)
+  .then((result) => {
+    redirectUser = result?.user || null;
+  })
+  .catch((err) => {
+    redirectError = err;
+  });
 
-export function getLastRedirectError() {
-  return redirectError;
+export async function waitForRedirectResult() {
+  await redirectResultPromise;
+  return { error: redirectError, user: redirectUser };
 }
 
 // Androidのホーム画面インストール(standalone)やモバイルブラウザでは、
