@@ -30,9 +30,21 @@ if (shareParams.has('url') || shareParams.has('text') || shareParams.has('title'
 startRouter();
 
 // クラウド同期は任意機能。CDNへ到達できない(オフライン等)場合もアプリ本体は動作し続ける。
-import('./sync.js').catch(() => {
-  // ネットワーク不通時などはローカル(IndexedDB)のみで動作する
-});
+// リダイレクトログインは戻り先が/settingsとは限らないため、結果の確認はページ側ではなく
+// ここで一度だけ行い、どの画面に着地しても必ず結果を表示する。
+import('./sync.js')
+  .then(async (sync) => {
+    const { error, user } = await sync.waitForRedirectResult();
+    const { showAlert } = await import('./ui.js');
+    if (error) {
+      await showAlert('Googleログインに失敗しました: ' + (error.message || error.code));
+    } else if (user) {
+      await showAlert(`${user.displayName || user.email} としてログインしました。クラウド同期がオンになりました。`);
+    }
+  })
+  .catch(() => {
+    // ネットワーク不通時などはローカル(IndexedDB)のみで動作する
+  });
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

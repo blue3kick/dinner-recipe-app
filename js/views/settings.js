@@ -183,8 +183,5 @@ async function initSyncSection() {
     const liveEl = document.getElementById('sync-section');
     if (liveEl) renderSyncStatus(liveEl, sync, status);
   });
-  const { error: redirectError } = await sync.waitForRedirectResult();
-  if (redirectError) {
-    await showAlert('ログインに失敗しました: ' + (redirectError.message || redirectError.code));
-  }
+  // リダイレクト結果の表示はapp.js側で画面遷移先に関わらず一度だけ行う
 }
