@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>夕食レシピ管理</title>
+  <meta name="theme-color" content="#e8734a" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icons/icon-192.svg" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.svg" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <header class="app-header no-print">
+    <h1>🍳 夕食レシピ管理</h1>
+  </header>
+
+  <main id="app"></main>
+
+  <nav class="bottom-nav no-print">
+    <a class="nav-link" href="#/list">📋<span>一覧</span></a>
+    <a class="nav-link" href="#/form">➕<span>登録</span></a>
+    <a class="nav-link" href="#/import">📥<span>取込</span></a>
+    <a class="nav-link" href="#/calendar">📅<span>記録</span></a>
+    <a class="nav-link" href="#/tags">🏷️<span>タグ</span></a>
+    <a class="nav-link" href="#/settings">⚙️<span>設定</span></a>
+  </nav>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
