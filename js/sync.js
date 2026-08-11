@@ -8,6 +8,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -123,6 +125,25 @@ function notifyStatus() {
   statusListeners.forEach((fn) => fn(status));
 }
 
+// signInWithRedirectで戻ってきた際のエラーを拾う(成功時はonAuthStateChangedが自動的に発火する)
+let redirectError = null;
+getRedirectResult(auth).catch((err) => {
+  redirectError = err;
+});
+
+export function getLastRedirectError() {
+  return redirectError;
+}
+
+// Androidのホーム画面インストール(standalone)やモバイルブラウザでは、
+// signInWithPopupがブロックされたり、ポップアップ↔本体間のストレージ共有がプライバシー保護で
+// 遮断されて固まったりすることがあるため、リダイレクト方式を使う。
+function shouldUseRedirect() {
+  const standalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone;
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  return !!(standalone || isMobile);
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (user) await startSync(user.uid);
   else stopSync();
@@ -150,7 +171,20 @@ export function getStatus() {
 
 export async function signIn() {
   const provider = new GoogleAuthProvider();
-  await signInWithPopup(auth, provider);
+  if (shouldUseRedirect()) {
+    await signInWithRedirect(auth, provider);
+    return;
+  }
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (err) {
+    const fallbackCodes = ['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'];
+    if (fallbackCodes.includes(err.code)) {
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+    throw err;
+  }
 }
 
 export async function signOutUser() {

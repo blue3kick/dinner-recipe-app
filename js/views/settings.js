@@ -176,4 +176,8 @@ async function initSyncSection() {
     const liveEl = document.getElementById('sync-section');
     if (liveEl) renderSyncStatus(liveEl, sync, status);
   });
+  const redirectError = sync.getLastRedirectError();
+  if (redirectError) {
+    await showAlert('ログインに失敗しました: ' + (redirectError.message || redirectError.code));
+  }
 }
