@@ -259,3 +259,7 @@ main#app { max-width: 720px; margin: 0 auto; padding: 16px; }
 
 .sync-account { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .sync-avatar { width: 36px; height: 36px; border-radius: 50%; }
+.sync-debug-log {
+  margin-top: 10px; padding: 8px 10px; background: #1e1a15; color: #d7d2c8; font-size: 0.72rem;
+  border-radius: 8px; white-space: pre-wrap; word-break: break-all; min-height: 1.4em; max-height: 200px; overflow-y: auto;
+}

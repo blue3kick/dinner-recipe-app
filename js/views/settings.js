@@ -154,14 +154,23 @@ function renderSyncStatus(el, sync, status) {
       <p class="muted">Googleアカウントでログインすると、同じアカウントでログインした端末間でレシピ・タグ・調理記録が自動的に同期されます。</p>
       ${timedOutNote}
       <div class="form-actions"><button id="btn-sync-in" class="btn btn-primary">Googleでログイン</button></div>
+      <pre id="sync-debug-log" class="sync-debug-log"></pre>
     `;
+    const logEl = document.getElementById('sync-debug-log');
+    const log = (msg) => {
+      logEl.textContent += `[${new Date().toLocaleTimeString('ja-JP')}] ${msg}\n`;
+    };
     document.getElementById('btn-sync-in').addEventListener('click', async () => {
+      log('ボタンがクリックされました');
       const timeout = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('ログイン画面への移動が始まりませんでした。ネットワーク接続をご確認のうえ、もう一度お試しください。')), 8000)
       );
       try {
+        log('sync.signIn() を呼び出します（この直後に画面がGoogleへ切り替わるはずです）');
         await Promise.race([sync.signIn(), timeout]);
+        log('signIn() が例外なく返ってきました（通常は画面遷移するのでここには来ないはずです）');
       } catch (err) {
+        log('エラー発生: ' + (err.code || '') + ' ' + (err.message || String(err)));
         await showAlert('ログインに失敗しました: ' + (err.message || err.code));
       }
     });
