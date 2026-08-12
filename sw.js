@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dinner-recipe-cache-v6';
+const CACHE_NAME = 'dinner-recipe-cache-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -17,8 +17,9 @@ const ASSETS = [
   './js/views/settings.js',
   './js/views/import.js',
   './js/views/calendar.js',
-  './icons/icon-192.svg',
-  './icons/icon-512.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png',
 ];
 
 self.addEventListener('install', (event) => {
